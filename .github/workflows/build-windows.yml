@@ -13,7 +13,7 @@ jobs:
       run:
         shell: pwsh
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -41,7 +41,7 @@ jobs:
           Copy-Item -Recurse assets dist/assets
           Compress-Archive -Path dist/* -DestinationPath yuantuanswitch-windows.zip
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: yuantuanswitch-windows
           path: yuantuanswitch-windows.zip
