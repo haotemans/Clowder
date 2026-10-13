@@ -37,18 +37,18 @@ jobs:
       - name: package
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Copy-Item target/release/yuantuanswitch.exe dist/
+          Copy-Item target/release/clowder.exe dist/
           Copy-Item -Recurse assets dist/assets
-          Compress-Archive -Path dist/* -DestinationPath yuantuanswitch-windows.zip
+          Compress-Archive -Path dist/* -DestinationPath clowder-windows.zip
 
       - uses: actions/upload-artifact@v5
         with:
-          name: yuantuanswitch-windows
-          path: yuantuanswitch-windows.zip
+          name: clowder-windows
+          path: clowder-windows.zip
 
       # 打 v* tag 时发 Release; 用 runner 自带的 gh, 不引第三方 action
       - name: release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "${{ github.ref_name }}" yuantuanswitch-windows.zip --title "yuantuanswitch `${{ github.ref_name }}" --generate-notes
+        run: gh release create "${{ github.ref_name }}" clowder-windows.zip --title "Clowder `${{ github.ref_name }}" --generate-notes

@@ -1,10 +1,10 @@
 param([string]$Label = 'BASE', [string]$Envs = '', [int]$Max = 180, [int]$Step = 5)
 
-$exe = "D:\weiai\project\yuantuanswitch\target\release\yuantuanswitch.exe"
-$out = "D:\weiai\project\yuantuanswitch\scripts\memlogs"
+$exe = "D:\weiai\project\Clowder\target\release\clowder.exe"
+$out = "D:\weiai\project\Clowder\scripts\memlogs"
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 
-Remove-Item Env:YTS_MEM_NO_FONT, Env:YTS_MEM_NO_PRICING, Env:YTS_MEM_NO_PROXY, Env:YTS_MEM_WORKERS, Env:YTS_MEM_FONT, Env:YTS_MEM_FONT_FILE, Env:YTS_MEM_SERIF_FILE -ErrorAction SilentlyContinue
+Remove-Item Env:CLOWDER_MEM_NO_FONT, Env:CLOWDER_MEM_NO_PRICING, Env:CLOWDER_MEM_NO_PROXY, Env:CLOWDER_MEM_WORKERS, Env:CLOWDER_MEM_FONT, Env:CLOWDER_MEM_FONT_FILE, Env:CLOWDER_MEM_SERIF_FILE -ErrorAction SilentlyContinue
 foreach ($e in ($Envs -split ';' | Where-Object { $_ })) {
   $k, $v = $e -split '=', 2
   Set-Item "Env:$k" $v

@@ -1,4 +1,4 @@
-use crate::app::YtsApp;
+use crate::app::ClowderApp;
 use crate::mini_theme as mt;
 use egui::{Color32, FontFamily, FontId, Pos2, RichText, Stroke, Ui, Vec2};
 use std::f32::consts::PI;
@@ -11,7 +11,7 @@ pub fn apply_visuals(ctx: &egui::Context) {
     ctx.set_visuals(visuals);
 }
 
-pub fn show(ctx: &egui::Context, app: &mut YtsApp) {
+pub fn show(ctx: &egui::Context, app: &mut ClowderApp) {
     egui::CentralPanel::default()
         .frame(egui::Frame::NONE.fill(Color32::TRANSPARENT))
         .show(ctx, |ui| {
@@ -38,7 +38,7 @@ pub fn show(ctx: &egui::Context, app: &mut YtsApp) {
     }
 }
 
-fn show_content(ctx: &egui::Context, ui: &mut Ui, app: &mut YtsApp) {
+fn show_content(ctx: &egui::Context, ui: &mut Ui, app: &mut ClowderApp) {
     ui.vertical(|ui| {
         // title-bar: left label, right buttons; drag strip sits behind/around
         let strip_h = 24.0;
@@ -75,7 +75,7 @@ fn show_content(ctx: &egui::Context, ui: &mut Ui, app: &mut YtsApp) {
         painter.text(
             drag_zone.left_center(),
             egui::Align2::LEFT_CENTER,
-            "yuantuanswitch",
+            "Clowder",
             FontId::monospace(11.0),
             mt::TEXT_FAINT,
         );
@@ -146,7 +146,7 @@ fn show_content(ctx: &egui::Context, ui: &mut Ui, app: &mut YtsApp) {
     });
 }
 
-fn draw_gauge(painter: &egui::Painter, rect: egui::Rect, app: &YtsApp) {
+fn draw_gauge(painter: &egui::Painter, rect: egui::Rect, app: &ClowderApp) {
     let center = rect.center();
     let radius = rect.width().min(rect.height()) / 2.0 - 10.0;
 

@@ -1,4 +1,4 @@
-# yuantuanswitch
+# Clowder
 
 Rust 实现的 **本地优先** LLM API 供应商切换 + 实时 token/TPS 统计工具 (Windows)。
 
@@ -17,12 +17,12 @@ Rust 实现的 **本地优先** LLM API 供应商切换 + 实时 token/TPS 统�
 
 ```powershell
 cargo build --release
-.\target\release\yuantuanswitch.exe
+.\target\release\clowder.exe
 ```
 
 ### 字体子集
 
-`assets/fonts/yts-cjk-{sans,serif}.ttf` 是 **Noto Sans SC / Noto Serif SC** (SIL OFL 1.1) 先 instanced 到
+`assets/fonts/clowder-cjk-{sans,serif}.ttf` 是 **Noto Sans SC / Noto Serif SC** (SIL OFL 1.1) 先 instanced 到
 wght=400、再裁到 GB2312 一二级字 + 界面用字后的静态子集, 合计约 5MB, 随仓库和 release 一起分发。
 
 系统 `msyh.ttc` / `simsun.ttc` 各约 19MB, 而 egui 要把整份字体常驻、ab_glyph 解析后再翻倍,
@@ -63,20 +63,22 @@ wght=400、再裁到 GB2312 一二级字 + 界面用字后的静态子集, 合�
 
 ## 数据位置
 
-- 配置: `%LOCALAPPDATA%\yuantuanswitch\yuantuanswitch\config\config.toml`
-- 数据库: `%LOCALAPPDATA%\yuantuanswitch\yuantuanswitch\data\yts.db`
-- 价格缓存: `%LOCALAPPDATA%\yuantuanswitch\yuantuanswitch\data\pricing_cache.json`
-- 日志: `%LOCALAPPDATA%\yuantuanswitch\yuantuanswitch\data\yts.log`
-- 字体子集: 仓库 `assets/fonts/` (开发) 或 `%LOCALAPPDATA%\yuantuanswitch\yuantuanswitch\data\fonts\` (发布)
+- 配置: `%LOCALAPPDATA%\clowder\clowder\data\config.toml`
+- 数据库: `%LOCALAPPDATA%\clowder\clowder\data\clowder.db`
+- 价格缓存: `%LOCALAPPDATA%\clowder\clowder\data\pricing_cache.json`
+- 日志: `%LOCALAPPDATA%\clowder\clowder\data\clowder.log`
+- 字体子集: 仓库 `assets/fonts/` (开发) 或 `%LOCALAPPDATA%\clowder\clowder\data\fonts\` (发布)
+
+旧版叫 yuantuanswitch, 数据在 `%LOCALAPPDATA%\yuantuanswitch\yuantuanswitch\data\`; 首次启动会自动整份搬到上面的新路径 (`yts.db`/`yts.log` 一并改名), 旧目录只拷不删, 留作回滚。
 
 ## Headless 模式
 
 ```powershell
-.\yuantuanswitch.exe -s     # 只跑代理 + 统计, 不开窗; 日志走 stdout, 可重定向
-.\yuantuanswitch.exe -f     # 直接开主界面 (默认开贴桌面的小窗, 双击小窗或点 □ 进主界面)
+.\clowder.exe -s     # 只跑代理 + 统计, 不开窗; 日志走 stdout, 可重定向
+.\clowder.exe -f     # 直接开主界面 (默认开贴桌面的小窗, 双击小窗或点 □ 进主界面)
 ```
 
-GUI 子系统下终端不会等 `-s` 退出, 要前台阻塞用 `start /wait .\yuantuanswitch.exe -s`。
+GUI 子系统下终端不会等 `-s` 退出, 要前台阻塞用 `start /wait .\clowder.exe -s`。
 
 只启动代理 + 统计, 不开 GUI。
 
@@ -84,7 +86,7 @@ GUI 子系统下终端不会等 `-s` 退出, 要前台阻塞用 `start /wait .\y
 
 本机实测 (2026-10-13, 系统缩放 175%, 空闲状态, 单位 MB):
 
-| 维度 | 原版 cc-switch (Tauri) | yuantuanswitch |
+| 维度 | 原版 cc-switch (Tauri) | Clowder |
 |---|---|---|
 | 主进程 WorkingSet | 62.8 | 91.6 |
 | 主进程 Private Bytes | 15.4 | 88.1 |

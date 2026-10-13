@@ -12,8 +12,8 @@ mod theme;
 
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
-use yts_core::{db_path, Config, Store};
-use yts_proxy::AppState;
+use clowder_core::{db_path, migrate_legacy_data, Config, Store};
+use clowder_proxy::AppState;
 
 fn main() -> anyhow::Result<()> {
     let args: Vec<String> = std::env::args().collect();
@@ -21,7 +21,15 @@ fn main() -> anyhow::Result<()> {
     // 默认开小窗; -f / --full 直接开主界面
     let start_full = args.iter().any(|a| a == "-f" || a == "--full");
 
+    // 改名 (yuantuanswitch → Clowder) 后的一次性数据迁移, 必须在 logger::init 之前:
+    // 日志文件一落到新 data 目录, 迁移就会把非空目录判定成"已经迁过"而跳过
+    let migration = migrate_legacy_data();
     logger::init(headless);
+    match migration {
+        Ok(0) => {}
+        Ok(n) => tracing::info!("migrated {n} file(s) from the legacy yuantuanswitch data dir"),
+        Err(e) => tracing::warn!("legacy data migration failed, starting with empty config: {e:#}"),
+    }
     let result = run(headless, start_full);
     if let Err(e) = &result {
         tracing::error!("fatal: {e:#}");
@@ -44,7 +52,7 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
 
     if headless {
         let listen = config.proxy.listen.clone();
-        return rt.block_on(async move { yts_proxy::run_proxy(&listen, config, store).await });
+        return rt.block_on(async move { clowder_proxy::run_proxy(&listen, config, store).await });
     }
 
     let (usage_tx, usage_rx) = broadcast::channel(1024);
@@ -53,7 +61,7 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
         store: store.clone(),
         usage_tx: usage_tx.clone(),
         providers: Arc::new(RwLock::new(config.providers.clone())),
-        price_table: Arc::new(RwLock::new(yts_core::resolve_table(&[]))),
+        price_table: Arc::new(RwLock::new(clowder_core::resolve_table(&[]))),
     };
 
     // start proxy in background
@@ -63,7 +71,7 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
             let cfg = proxy_state.config.read().await;
             cfg.proxy.listen.clone()
         };
-        if let Err(e) = yts_proxy::run_with_state(&listen, proxy_state).await {
+        if let Err(e) = clowder_proxy::run_with_state(&listen, proxy_state).await {
             tracing::error!("proxy error: {}", e);
         }
     });
@@ -80,7 +88,7 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
                     cfg.pricing.refresh_hours,
                 )
             };
-            let mut table = yts_core::resolve_table(&[]);
+            let mut table = clowder_core::resolve_table(&[]);
             let mut updated = false;
 
             // 缓存还在有效期内就不拉, 省掉两次大 JSON 的内存峰值和启动时的流量
@@ -95,7 +103,7 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
                     {
                         Ok(resp) => match resp.text().await {
                             Ok(text) => {
-                                let t = yts_core::parse_litellm_str(&text);
+                                let t = clowder_core::parse_litellm_str(&text);
                                 updated |= !t.models.is_empty();
                                 table.merge(t);
                             }
@@ -108,7 +116,7 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
                     match reqwest::get("https://openrouter.ai/api/v1/models").await {
                         Ok(resp) => match resp.text().await {
                             Ok(text) => {
-                                let t = yts_core::parse_openrouter_str(&text);
+                                let t = clowder_core::parse_openrouter_str(&text);
                                 updated |= !t.models.is_empty();
                                 table.merge(t);
                             }
@@ -121,7 +129,7 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
 
             if updated {
                 table.fetched_at = Some(chrono::Utc::now());
-                let _ = yts_core::save_cache(&table);
+                let _ = clowder_core::save_cache(&table);
                 // write().await: try_write 在 GUI 持有读锁时会静默失败, 价目几小时都不更新
                 *pricing_state.price_table.write().await = table;
             }
@@ -130,7 +138,7 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
         }
     });
 
-    let app = app::YtsApp::new(state, usage_rx, store, start_full);
+    let app = app::ClowderApp::new(state, usage_rx, store, start_full);
 
     // 默认开小窗; -f 直接开主界面, 窗口参数要和 app 的初始 mode 一致, 否则会先弹一个 300px 的框
     let mut builder = egui::ViewportBuilder::default().with_icon(load_icon());
@@ -153,9 +161,9 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
     };
 
     eframe::run_native(
-        "yuantuanswitch",
+        "Clowder",
         native_options,
-        Box::new(|cc| Ok(Box::new(app::YtsApp::init(cc, app)))),
+        Box::new(|cc| Ok(Box::new(app::ClowderApp::init(cc, app)))),
     )
     .map_err(|e| anyhow::anyhow!("eframe error: {}", e))
 }

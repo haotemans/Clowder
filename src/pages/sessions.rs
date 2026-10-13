@@ -1,8 +1,8 @@
-use crate::app::YtsApp;
+use crate::app::ClowderApp;
 use crate::theme;
 use egui::{FontFamily, RichText, Ui};
 
-pub fn show(ui: &mut Ui, app: &mut YtsApp) {
+pub fn show(ui: &mut Ui, app: &mut ClowderApp) {
     ui.label(theme::h1("会话"));
     ui.add_space(8.0);
 
@@ -17,7 +17,7 @@ pub fn show(ui: &mut Ui, app: &mut YtsApp) {
         {
             let mut path = std::env::temp_dir();
             path.push(format!(
-                "yuantuanswitch-usage-{}.csv",
+                "clowder-usage-{}.csv",
                 chrono::Utc::now().format("%Y%m%d-%H%M%S")
             ));
             match app.store.export_csv(&path) {

@@ -1,8 +1,8 @@
-use crate::app::YtsApp;
+use crate::app::ClowderApp;
 use crate::theme;
 use egui::{FontId, Ui};
 
-pub fn show(ui: &mut Ui, app: &mut YtsApp) {
+pub fn show(ui: &mut Ui, app: &mut ClowderApp) {
     ui.label(theme::h1("设置"));
     theme::section_gap(ui);
 
@@ -92,7 +92,7 @@ pub fn show(ui: &mut Ui, app: &mut YtsApp) {
         ui.add_space(12.0);
         ui.label(theme::meta(format!(
             "目录 {}",
-            yts_core::data_dir().unwrap_or_default().display()
+            clowder_core::data_dir().unwrap_or_default().display()
         )));
 
         if changed {

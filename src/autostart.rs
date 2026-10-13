@@ -4,7 +4,7 @@ use windows_sys::Win32::System::Registry::{
 };
 
 const RUN_KEY: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
-const VALUE_NAME: &str = "yuantuanswitch";
+const VALUE_NAME: &str = "clowder";
 
 pub fn enable() -> anyhow::Result<()> {
     let exe = env::current_exe()?;

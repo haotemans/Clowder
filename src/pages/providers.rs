@@ -1,7 +1,7 @@
-use crate::app::YtsApp;
+use crate::app::ClowderApp;
 use crate::theme;
 use egui::{FontFamily, FontId, RichText, Ui};
-use yts_core::{Protocol, Provider, UpstreamStrategy};
+use clowder_core::{Protocol, Provider, UpstreamStrategy};
 
 #[derive(Default)]
 pub struct EditState {
@@ -14,7 +14,7 @@ pub struct EditState {
     pub custom_proxy_url: String,
 }
 
-pub fn show(ui: &mut Ui, app: &mut YtsApp) {
+pub fn show(ui: &mut Ui, app: &mut ClowderApp) {
     ui.label(theme::h1("供应商"));
     ui.add_space(8.0);
 
@@ -232,7 +232,7 @@ pub fn show(ui: &mut Ui, app: &mut YtsApp) {
                                     Some(app.edit_state.custom_proxy_url.clone())
                                 };
                                 if !app.edit_state.api_key.is_empty() {
-                                    match yts_proxy::dpapi::encrypt(&app.edit_state.api_key) {
+                                    match clowder_proxy::dpapi::encrypt(&app.edit_state.api_key) {
                                         Ok(enc) => p.api_key_encrypted = enc,
                                         Err(e) => {
                                             app.status_message = Some(format!("加密失败: {}", e))
@@ -293,21 +293,21 @@ pub fn show(ui: &mut Ui, app: &mut YtsApp) {
     }
 }
 
-fn add_provider(app: &mut YtsApp, protocol: Protocol) {
+fn add_provider(app: &mut ClowderApp, protocol: Protocol) {
     let p = Provider::new_template(protocol);
     if let Ok(mut providers) = app.state.providers.try_write() {
         providers.push(p);
     }
 }
 
-fn add_openrouter(app: &mut YtsApp) {
+fn add_openrouter(app: &mut ClowderApp) {
     let p = Provider::openrouter();
     if let Ok(mut providers) = app.state.providers.try_write() {
         providers.push(p);
     }
 }
 
-fn write_claude_code_config(app: &mut YtsApp) -> anyhow::Result<String> {
+fn write_claude_code_config(app: &mut ClowderApp) -> anyhow::Result<String> {
     let (provider, listen) = {
         let cfg = app
             .state

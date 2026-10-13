@@ -1,4 +1,4 @@
-本目录下的 yts-cjk-*.ttf 是下列字体的子集 (instanced 到 wght=400 后裁剪), 授权: SIL OFL 1.1.
+本目录下的 clowder-cjk-*.ttf 是下列字体的子集 (instanced 到 wght=400 后裁剪), 授权: SIL OFL 1.1.
 
 源字体: NotoSansSC-VF.ttf
   版权: © 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.

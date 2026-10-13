@@ -356,6 +356,61 @@ dependencies = [
 ]
 
 [[package]]
+name = "clowder"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clowder-core",
+ "clowder-proxy",
+ "eframe",
+ "egui",
+ "egui_plot",
+ "reqwest",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "clowder-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "csv",
+ "directories",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "toml",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "clowder-proxy"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "base64 0.22.1",
+ "bytes",
+ "clowder-core",
+ "futures",
+ "hyper",
+ "reqwest",
+ "serde_json",
+ "tokio",
+ "tokio-stream",
+ "tower",
+ "tracing",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "combine"
 version = "4.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3992,61 +4047,6 @@ dependencies = [
  "quote",
  "syn 3.0.9",
  "synstructure",
-]
-
-[[package]]
-name = "yts-core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "csv",
- "directories",
- "rusqlite",
- "serde",
- "serde_json",
- "toml",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "yts-proxy"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "base64 0.22.1",
- "bytes",
- "futures",
- "hyper",
- "reqwest",
- "serde_json",
- "tokio",
- "tokio-stream",
- "tower",
- "tracing",
- "windows-sys 0.59.0",
- "yts-core",
-]
-
-[[package]]
-name = "yuantuanswitch"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "eframe",
- "egui",
- "egui_plot",
- "reqwest",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "windows-sys 0.59.0",
- "yts-core",
- "yts-proxy",
 ]
 
 [[package]]

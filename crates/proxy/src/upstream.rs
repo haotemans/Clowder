@@ -1,7 +1,7 @@
 use reqwest::Client;
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
-use yts_core::{Provider, UpstreamStrategy};
+use clowder_core::{Provider, UpstreamStrategy};
 
 /// 按配置指纹缓存 Client. 每个请求 new 一个 Client 会重做 TLS 握手、重建连接池,
 /// 延迟和内存抖动都比"复用一条连接"贵得多.

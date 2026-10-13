@@ -190,9 +190,55 @@ impl Provider {
 }
 
 pub fn data_dir() -> anyhow::Result<PathBuf> {
-    let proj = directories::ProjectDirs::from("com", "yuantuanswitch", "yuantuanswitch")
+    let proj = directories::ProjectDirs::from("com", "clowder", "clowder")
         .ok_or_else(|| anyhow::anyhow!("cannot determine data dir"))?;
     Ok(proj.data_local_dir().to_path_buf())
+}
+
+/// 改名前的工程标识, 老数据躺在它下面
+fn legacy_data_dir() -> Option<PathBuf> {
+    directories::ProjectDirs::from("com", "yuantuanswitch", "yuantuanswitch")
+        .map(|p| p.data_local_dir().to_path_buf())
+}
+
+/// 一次性把旧 yuantuanswitch 目录搬到 clowder 目录, 顺带把 yts.* 文件名改成 clowder.*
+/// (yts.db / yts.db-wal / yts.db-shm / yts.log)。新目录非空就什么都不做, 旧目录只拷不删,
+/// 留个回滚余地。返回迁移的文件数。
+pub fn migrate_legacy_data() -> anyhow::Result<usize> {
+    let new_dir = data_dir()?;
+    let Some(legacy) = legacy_data_dir().filter(|p| p.exists()) else {
+        return Ok(0);
+    };
+    let dirty = std::fs::read_dir(&new_dir)
+        .map(|mut d| d.next().is_some())
+        .unwrap_or(false);
+    if dirty {
+        return Ok(0);
+    }
+    std::fs::create_dir_all(&new_dir)?;
+    copy_tree(&legacy, &new_dir)
+}
+
+fn copy_tree(from: &std::path::Path, to: &std::path::Path) -> anyhow::Result<usize> {
+    let mut copied = 0;
+    for entry in std::fs::read_dir(from)? {
+        let entry = entry?;
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let name = match name.strip_prefix("yts.") {
+            Some(rest) => format!("clowder.{rest}"),
+            None => name,
+        };
+        let target = to.join(name);
+        let file_type = entry.file_type()?;
+        if file_type.is_dir() {
+            std::fs::create_dir_all(&target)?;
+            copied += copy_tree(&entry.path(), &target)?;
+        } else if file_type.is_file() && !target.exists() {
+            std::fs::copy(entry.path(), &target)?;
+            copied += 1;
+        }
+    }
+    Ok(copied)
 }
 
 pub fn config_path() -> anyhow::Result<PathBuf> {
@@ -200,7 +246,7 @@ pub fn config_path() -> anyhow::Result<PathBuf> {
 }
 
 pub fn db_path() -> anyhow::Result<PathBuf> {
-    Ok(data_dir()?.join("yts.db"))
+    Ok(data_dir()?.join("clowder.db"))
 }
 
 pub fn pricing_cache_path() -> anyhow::Result<PathBuf> {

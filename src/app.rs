@@ -1,7 +1,7 @@
 use eframe::egui;
 use tokio::sync::broadcast;
-use yts_core::{Store, UsageRecord};
-use yts_proxy::AppState;
+use clowder_core::{Store, UsageRecord};
+use clowder_proxy::AppState;
 
 use crate::pages::{dashboard, providers, sessions, settings};
 
@@ -22,21 +22,21 @@ pub enum UiMode {
     Mini,
 }
 
-pub struct YtsApp {
+pub struct ClowderApp {
     pub state: AppState,
     pub usage_rx: broadcast::Receiver<UsageRecord>,
     pub store: Store,
     pub page: Page,
     pub recent_usage: Vec<UsageRecord>,
     pub realtime_series: Vec<(f64, f64, f64)>,
-    pub last_summary: Option<yts_core::UsageSummary>,
+    pub last_summary: Option<clowder_core::UsageSummary>,
     pub status_message: Option<String>,
     pub edit_state: crate::pages::providers::EditState,
     pub ui_mode: UiMode,
     pub mode_applied: Option<UiMode>,
 }
 
-impl YtsApp {
+impl ClowderApp {
     pub fn new(
         state: AppState,
         usage_rx: broadcast::Receiver<UsageRecord>,
@@ -154,7 +154,7 @@ fn font_dirs() -> Vec<std::path::PathBuf> {
         }
     }
     dirs.push(std::path::Path::new("assets").join("fonts")); // cargo run 的工作目录
-    if let Ok(data) = yts_core::data_dir() {
+    if let Ok(data) = clowder_core::data_dir() {
         dirs.push(data.join("fonts"));
     }
     dirs
@@ -171,7 +171,7 @@ fn install_cjk_font(ctx: &egui::Context) {
 
     // 正文/等宽的中文兜底
     if let Some(bytes) = find_font(
-        &["yts-cjk-sans.ttf"],
+        &["clowder-cjk-sans.ttf"],
         &[
             r"C:\Windows\Fonts\msyh.ttc",
             r"C:\Windows\Fonts\Deng.ttf",
@@ -192,7 +192,7 @@ fn install_cjk_font(ctx: &egui::Context) {
     // serif-display: 拉丁用 Georgia, 中文用宋体
     let mut serif_family: Vec<String> = Vec::new();
     if let Some(bytes) = find_font(
-        &["yts-serif-latin.ttf"],
+        &["clowder-serif-latin.ttf"],
         &[
             r"C:\Windows\Fonts\georgia.ttf",
             r"C:\Windows\Fonts\georgiab.ttf",
@@ -203,7 +203,7 @@ fn install_cjk_font(ctx: &egui::Context) {
         serif_family.push("serif-display".to_string());
     }
     if let Some(bytes) = find_font(
-        &["yts-cjk-serif.ttf"],
+        &["clowder-cjk-serif.ttf"],
         &[r"C:\Windows\Fonts\simsun.ttc", r"C:\Windows\Fonts\simsunb.ttf"],
     ) {
         insert_font(&mut fonts, "serif-cjk", bytes);
@@ -228,7 +228,7 @@ fn install_cjk_font(ctx: &egui::Context) {
     ctx.set_fonts(fonts);
 }
 
-impl eframe::App for YtsApp {
+impl eframe::App for ClowderApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // 主界面走冷白主题; mini 自己那套玻璃主题在切换时单独设
         if self.ui_mode == UiMode::Full {
@@ -261,7 +261,7 @@ impl eframe::App for YtsApp {
                 }
             }
             ctx.send_viewport_cmd(egui::ViewportCommand::Title(
-                "yuantuanswitch".to_string(),
+                "Clowder".to_string(),
             ));
             self.mode_applied = Some(self.ui_mode);
         }
@@ -287,7 +287,7 @@ impl eframe::App for YtsApp {
                     ui.painter().rect_filled(rect, 0.0, crate::theme::ACCENT);
                     ui.add_space(14.0);
                     ui.label(
-                        egui::RichText::new("yuantuanswitch")
+                        egui::RichText::new("Clowder")
                             .family(egui::FontFamily::Monospace)
                             .size(16.0)
                             .color(crate::theme::TEXT)

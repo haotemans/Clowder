@@ -1,5 +1,5 @@
 [package]
-name = "yts-proxy"
+name = "clowder-proxy"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -7,7 +7,7 @@ license.workspace = true
 description = "Local HTTP interception proxy with streaming usage parsing"
 
 [dependencies]
-yts-core = { path = "../core" }
+clowder-core = { path = "../core" }
 
 anyhow.workspace = true
 serde_json.workspace = true

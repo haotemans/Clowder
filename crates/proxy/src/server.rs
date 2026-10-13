@@ -11,7 +11,9 @@ use futures::StreamExt;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::{broadcast, RwLock};
-use yts_core::{Config, PriceTable, Protocol, Provider, Status as UsageStatus, Store, UsageRecord};
+use clowder_core::{
+    Config, PriceTable, Protocol, Provider, Status as UsageStatus, Store, UsageRecord,
+};
 
 use crate::parser::{
     parse_anthropic_event, parse_openai_event, parse_openai_json, ParserKind, SseEvent, SseParser,
@@ -48,7 +50,7 @@ pub async fn run_proxy(listen: &str, config: Config, store: Store) -> anyhow::Re
         store,
         usage_tx,
         providers: Arc::new(RwLock::new(Vec::new())),
-        price_table: Arc::new(RwLock::new(yts_core::snapshot_table())),
+        price_table: Arc::new(RwLock::new(clowder_core::snapshot_table())),
     };
     state.refresh_providers().await;
     run_with_state(listen, state).await
@@ -60,7 +62,7 @@ pub async fn run_with_state(listen: &str, state: AppState) -> anyhow::Result<()>
     let listener = tokio::net::TcpListener::bind(listen)
         .await
         .with_context(|| format!("bind {}", listen))?;
-    tracing::info!("yts-proxy listening on http://{}", listen);
+    tracing::info!("clowder-proxy listening on http://{}", listen);
     axum::serve(listener, app).await?;
     Ok(())
 }

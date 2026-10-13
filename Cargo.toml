@@ -7,7 +7,7 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.80"
 license = "MIT"
-repository = "https://github.com/yuantuanswitch/yuantuanswitch"
+repository = "https://github.com/haotemans/Clowder"
 
 [workspace.dependencies]
 anyhow = "1"
@@ -37,11 +37,11 @@ tokio-stream = "0.1"
 base64 = "0.22"
 
 [[bin]]
-name = "yuantuanswitch"
+name = "clowder"
 path = "src/main.rs"
 
 [package]
-name = "yuantuanswitch"
+name = "clowder"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -49,8 +49,8 @@ license.workspace = true
 description = "Local-first LLM API provider switcher with real-time token/TPS stats"
 
 [dependencies]
-yts-core = { path = "crates/core" }
-yts-proxy = { path = "crates/proxy" }
+clowder-core = { path = "crates/core" }
+clowder-proxy = { path = "crates/proxy" }
 
 anyhow.workspace = true
 serde_json.workspace = true

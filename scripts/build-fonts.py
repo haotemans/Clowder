@@ -24,8 +24,8 @@ WEIGHT_AXIS, WEIGHT_VALUE = "wght", 400
 UNICODES = "U+0020-007E,U+00A0-00FF,U+2000-206F,U+3000-303F,U+FE10-FE1F,U+FF00-FFEF"
 
 TARGETS = [
-    ("yts-cjk-sans.ttf", r"C:\Windows\Fonts\NotoSansSC-VF.ttf"),
-    ("yts-cjk-serif.ttf", r"C:\Windows\Fonts\NotoSerifSC-VF.ttf"),
+    ("clowder-cjk-sans.ttf", r"C:\Windows\Fonts\NotoSansSC-VF.ttf"),
+    ("clowder-cjk-serif.ttf", r"C:\Windows\Fonts\NotoSerifSC-VF.ttf"),
 ]
 
 
@@ -64,7 +64,7 @@ def source_chars():
     paths += glob.glob(os.path.join(ROOT, "crates", "**", "*.rs"), recursive=True)
     paths.append(
         os.path.expandvars(
-            r"%LOCALAPPDATA%\yuantuanswitch\yuantuanswitch\config\config.toml"
+            r"%LOCALAPPDATA%\clowder\clowder\data\config.toml"
         )
     )
     for p in paths:
@@ -113,7 +113,7 @@ def check_ofl_license():
 
 def write_license_notice():
     """OFL 要求版权声明随字体分发且不删除: 把字体内嵌的版权/许可声明原样抄一份到仓库."""
-    lines = ["本目录下的 yts-cjk-*.ttf 是下列字体的子集 (instanced 到 wght=400 后裁剪), 授权: SIL OFL 1.1.", ""]
+    lines = ["本目录下的 clowder-cjk-*.ttf 是下列字体的子集 (instanced 到 wght=400 后裁剪), 授权: SIL OFL 1.1.", ""]
     for out_name, src in TARGETS:
         if not os.path.exists(src):
             continue

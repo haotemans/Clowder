@@ -1,8 +1,8 @@
-use crate::app::YtsApp;
+use crate::app::ClowderApp;
 use crate::theme;
 use egui::{FontFamily, RichText, Ui};
 
-pub fn show(ui: &mut Ui, app: &mut YtsApp) {
+pub fn show(ui: &mut Ui, app: &mut ClowderApp) {
     // --- header with editorial hierarchy ---
     ui.label(theme::h1("统计"));
     ui.add_space(32.0);
@@ -132,9 +132,9 @@ pub fn show(ui: &mut Ui, app: &mut YtsApp) {
                 );
                 cell_text_right(ui, widths[7], theme::mono_dim(format!("{}", r.duration_ms)));
                 let (c, t) = match r.status {
-                    yts_core::Status::Ok => (theme::POSITIVE, "●"),
-                    yts_core::Status::Error => (theme::NEGATIVE, "●"),
-                    yts_core::Status::Aborted => (theme::DIM, "●"),
+                    clowder_core::Status::Ok => (theme::POSITIVE, "●"),
+                    clowder_core::Status::Error => (theme::NEGATIVE, "●"),
+                    clowder_core::Status::Aborted => (theme::DIM, "●"),
                 };
                 cell_text(ui, widths[8], RichText::new(t).color(c));
             });

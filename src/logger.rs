@@ -1,4 +1,4 @@
-//! 日志出口: 从终端启动 (含 `-s`) 走 stdout; 双击启动没有控制台, 写 data 目录下的 yts.log.
+//! 日志出口: 从终端启动 (含 `-s`) 走 stdout; 双击启动没有控制台, 写 data 目录下的 clowder.log.
 //! GUI 子系统程序的 stdout 句柄是从父终端继承的, 不需要 AttachConsole, 重定向和管道也都正常。
 
 use std::fs::OpenOptions;
@@ -10,7 +10,7 @@ const MAX_LOG_BYTES: u64 = 1024 * 1024;
 
 pub fn init(headless: bool) {
     let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info,yts=debug"));
+        .unwrap_or_else(|_| EnvFilter::new("info,clowder=debug"));
     let builder = tracing_subscriber::fmt()
         .with_env_filter(filter)
         .with_target(false);
@@ -36,9 +36,9 @@ pub fn init(headless: bool) {
 }
 
 pub fn log_path() -> PathBuf {
-    yts_core::data_dir()
-        .map(|d| d.join("yts.log"))
-        .unwrap_or_else(|_| PathBuf::from("yts.log"))
+    clowder_core::data_dir()
+        .map(|d| d.join("clowder.log"))
+        .unwrap_or_else(|_| PathBuf::from("clowder.log"))
 }
 
 fn log_file() -> anyhow::Result<std::fs::File> {
@@ -76,7 +76,7 @@ fn to_wide(s: &str) -> Vec<u16> {
 #[cfg(windows)]
 pub fn show_fatal(err: &str) {
     use windows_sys::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR};
-    let title = to_wide("yuantuanswitch 启动失败");
+    let title = to_wide("Clowder 启动失败");
     let body = to_wide(err);
     unsafe {
         MessageBoxW(std::ptr::null_mut(), body.as_ptr(), title.as_ptr(), MB_ICONERROR);
