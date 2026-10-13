@@ -1,0 +1,60 @@
+{
+  "models": {
+    "claude-3-5-sonnet-20241022": {
+      "model": "claude-3-5-sonnet-20241022",
+      "input_per_m": 3.0,
+      "output_per_m": 15.0,
+      "cache_read_per_m": 0.3,
+      "cache_write_per_m": 3.75,
+      "source": "snapshot"
+    },
+    "claude-3-5-haiku-20241022": {
+      "model": "claude-3-5-haiku-20241022",
+      "input_per_m": 0.8,
+      "output_per_m": 4.0,
+      "cache_read_per_m": 0.08,
+      "cache_write_per_m": 1.0,
+      "source": "snapshot"
+    },
+    "claude-3-opus-20240229": {
+      "model": "claude-3-opus-20240229",
+      "input_per_m": 15.0,
+      "output_per_m": 75.0,
+      "cache_read_per_m": 1.5,
+      "cache_write_per_m": 18.75,
+      "source": "snapshot"
+    },
+    "gpt-4o": {
+      "model": "gpt-4o",
+      "input_per_m": 2.5,
+      "output_per_m": 10.0,
+      "cache_read_per_m": 1.25,
+      "cache_write_per_m": 2.5,
+      "source": "snapshot"
+    },
+    "gpt-4o-mini": {
+      "model": "gpt-4o-mini",
+      "input_per_m": 0.15,
+      "output_per_m": 0.6,
+      "cache_read_per_m": 0.075,
+      "cache_write_per_m": 0.15,
+      "source": "snapshot"
+    },
+    "o1": {
+      "model": "o1",
+      "input_per_m": 15.0,
+      "output_per_m": 60.0,
+      "cache_read_per_m": 7.5,
+      "cache_write_per_m": 15.0,
+      "source": "snapshot"
+    },
+    "deepseek-chat": {
+      "model": "deepseek-chat",
+      "input_per_m": 0.27,
+      "output_per_m": 1.1,
+      "cache_read_per_m": 0.07,
+      "cache_write_per_m": 0.27,
+      "source": "snapshot"
+    }
+  }
+}

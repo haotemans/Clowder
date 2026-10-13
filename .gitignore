@@ -1,0 +1,10 @@
+/target
+**/*.rs.bk
+*.pdb
+.idea/
+.vscode/
+
+scripts/memlogs/
+
+# assets/fonts/ 是 OFL 授权的 Noto 子集, 要入库 (CI 产物直接带上); 临时字符表不入库
+assets/fonts/_*

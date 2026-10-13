@@ -1,0 +1,28 @@
+[package]
+name = "yts-proxy"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Local HTTP interception proxy with streaming usage parsing"
+
+[dependencies]
+yts-core = { path = "../core" }
+
+anyhow.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+axum.workspace = true
+reqwest.workspace = true
+bytes.workspace = true
+futures.workspace = true
+tokio-stream.workspace = true
+base64.workspace = true
+windows-sys.workspace = true
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full", "test-util"] }
+axum = { version = "0.8", features = ["http2", "ws"] }
+hyper = "1"
+tower = "0.5"

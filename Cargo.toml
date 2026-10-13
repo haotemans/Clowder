@@ -1,0 +1,74 @@
+[workspace]
+resolver = "2"
+members = ["crates/core", "crates/proxy"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+license = "MIT"
+repository = "https://github.com/yuantuanswitch/yuantuanswitch"
+
+[workspace.dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1", features = ["full"] }
+axum = { version = "0.8", features = ["http2", "ws"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream", "json"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+bytes = "1"
+futures = "0.3"
+directories = "5"
+windows-sys = { version = "0.59", features = [
+    "Win32_Security_Cryptography",
+    "Win32_System_Registry",
+    "Win32_System_Memory",
+    "Win32_Globalization",
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+] }
+tokio-stream = "0.1"
+base64 = "0.22"
+
+[[bin]]
+name = "yuantuanswitch"
+path = "src/main.rs"
+
+[package]
+name = "yuantuanswitch"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Local-first LLM API provider switcher with real-time token/TPS stats"
+
+[dependencies]
+yts-core = { path = "crates/core" }
+yts-proxy = { path = "crates/proxy" }
+
+anyhow.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
+chrono.workspace = true
+windows-sys.workspace = true
+reqwest.workspace = true
+
+egui = "0.31"
+# persistence 没用到 (配置和统计都走自己的 toml + SQLite), 关掉少一串依赖
+eframe = { version = "0.31", default-features = false, features = ["glow", "default_fonts"] }
+egui_plot = "0.31"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"

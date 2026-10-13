@@ -1,0 +1,54 @@
+name: build-windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: OFL license gate
+        run: |
+          if (-not (Test-Path assets/fonts/OFL.txt)) {
+            if ("${{ github.ref }}" -like "refs/tags/v*") {
+              Write-Error "缺 assets/fonts/OFL.txt: 带 Noto 子集的 release 必须附 SIL OFL 1.1 全文"
+            }
+            Write-Warning "缺 assets/fonts/OFL.txt (只有打 tag 的 release 会因此失败)"
+          }
+
+      - name: test
+        run: cargo test --workspace --release
+
+      - name: build
+        run: cargo build --release --locked
+
+      - name: package
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item target/release/yuantuanswitch.exe dist/
+          Copy-Item -Recurse assets dist/assets
+          Compress-Archive -Path dist/* -DestinationPath yuantuanswitch-windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yuantuanswitch-windows
+          path: yuantuanswitch-windows.zip
+
+      # 打 v* tag 时发 Release; 用 runner 自带的 gh, 不引第三方 action
+      - name: release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "${{ github.ref_name }}" yuantuanswitch-windows.zip --title "yuantuanswitch `${{ github.ref_name }}" --generate-notes
