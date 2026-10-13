@@ -15,9 +15,6 @@ pub struct EditState {
 }
 
 pub fn show(ui: &mut Ui, app: &mut ClowderApp) {
-    ui.label(theme::h1("供应商"));
-    ui.add_space(8.0);
-
     ui.horizontal(|ui| {
         for (label, protocol) in [
             ("+ Anthropic", Some(Protocol::Anthropic)),

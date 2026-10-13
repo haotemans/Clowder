@@ -3,9 +3,6 @@ use crate::theme;
 use egui::{FontId, Ui};
 
 pub fn show(ui: &mut Ui, app: &mut ClowderApp) {
-    ui.label(theme::h1("设置"));
-    theme::section_gap(ui);
-
     let mut changed = false;
     if let Ok(mut cfg) = app.state.config.try_write() {
         // proxy group

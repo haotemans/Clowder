@@ -90,14 +90,6 @@ pub fn assert_visuals(ctx: &egui::Context) {
 }
 
 // ----- typography -----
-pub fn h1(text: impl Into<String>) -> egui::RichText {
-    egui::RichText::new(text.into())
-        .family(FontFamily::Name("serif-display".into()))
-        .size(64.0)
-        .color(TEXT)
-        .strong()
-}
-
 pub fn h2(text: impl Into<String>) -> egui::RichText {
     egui::RichText::new(text.into())
         .family(FontFamily::Proportional)

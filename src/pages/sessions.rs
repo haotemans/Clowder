@@ -3,9 +3,6 @@ use crate::theme;
 use egui::{FontFamily, RichText, Ui};
 
 pub fn show(ui: &mut Ui, app: &mut ClowderApp) {
-    ui.label(theme::h1("会话"));
-    ui.add_space(8.0);
-
     ui.horizontal(|ui| {
         if ui
             .button(

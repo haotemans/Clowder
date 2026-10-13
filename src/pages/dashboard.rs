@@ -3,10 +3,6 @@ use crate::theme;
 use egui::{FontFamily, RichText, Ui};
 
 pub fn show(ui: &mut Ui, app: &mut ClowderApp) {
-    // --- header with editorial hierarchy ---
-    ui.label(theme::h1("统计"));
-    ui.add_space(32.0);
-
     // --- stats row: big serif-feel numbers with sub-caption, hairline separated ---
     let s = app.last_summary.clone().unwrap_or_default();
     let cols: [(&str, String, bool, String); 5] = [

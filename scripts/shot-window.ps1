@@ -1,6 +1,7 @@
 param(
-  [string]$Out = "D:\weiai\project\clowder\scripts\memlogs\shot-window.png",
-  [string]$AppArgs = ""
+  [string]$Out = "D:\weiai\project\Clowder\scripts\memlogs\shot-window.png",
+  [string]$AppArgs = "",
+  [string]$Exe = "D:\weiai\project\Clowder\target\release\clowder.exe"
 )
 
 Add-Type @"
@@ -24,8 +25,8 @@ public static class W {
 
 Add-Type -AssemblyName System.Windows.Forms, System.Drawing
 
-if ($AppArgs) { $p = Start-Process -FilePath "D:\weiai\project\clowder\target\release\clowder.exe" -ArgumentList $AppArgs -PassThru -WindowStyle Hidden }
-else { $p = Start-Process -FilePath "D:\weiai\project\clowder\target\release\clowder.exe" -PassThru -WindowStyle Hidden }
+if ($AppArgs) { $p = Start-Process -FilePath $Exe -ArgumentList $AppArgs -PassThru -WindowStyle Hidden }
+else { $p = Start-Process -FilePath $Exe -PassThru -WindowStyle Hidden }
 Start-Sleep -Seconds 7
 
 $found = @()
