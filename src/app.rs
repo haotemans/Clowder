@@ -29,6 +29,7 @@ pub struct ClowderApp {
     pub page: Page,
     pub recent_usage: Vec<UsageRecord>,
     pub realtime_series: Vec<(f64, f64, f64)>,
+    pub daily: Vec<clowder_core::DayUsage>,
     pub last_summary: Option<clowder_core::UsageSummary>,
     pub status_message: Option<String>,
     pub edit_state: crate::pages::providers::EditState,
@@ -50,6 +51,7 @@ impl ClowderApp {
             page: Page::Dashboard,
             recent_usage: Vec::new(),
             realtime_series: Vec::new(),
+            daily: Vec::new(),
             last_summary: None,
             status_message: None,
             edit_state: Default::default(),
@@ -92,6 +94,11 @@ impl ClowderApp {
             .timestamp_millis();
         if let Ok(s) = self.store.summary_since(day_start) {
             self.last_summary = Some(s);
+        }
+        // 周期表: 53 周够铺满最宽的窗口, 更早的历史这页不展示
+        let since = now - chrono::Duration::days(53 * 7);
+        if let Ok(d) = self.store.daily_usage(since.timestamp_millis(), (53 * 7) as usize) {
+            self.daily = d;
         }
     }
 

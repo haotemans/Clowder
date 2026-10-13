@@ -1,4 +1,4 @@
-use crate::usage::{SessionInfo, Status, UsageRecord, UsageSummary};
+use crate::usage::{DayUsage, SessionInfo, Status, UsageRecord, UsageSummary};
 use chrono::{DateTime, Utc};
 use rusqlite::{params, Connection};
 use std::path::Path;
@@ -165,6 +165,37 @@ impl Store {
         Ok(out)
     }
 
+    /// 按天聚合给仪表盘周期表; 日期用 UTC, 与 summary_since 的"今日"同一口径
+    pub fn daily_usage(&self, since_ms: i64, max_days: usize) -> anyhow::Result<Vec<DayUsage>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT date(ts / 1000, 'unixepoch') AS d,
+                    COALESCE(SUM(input_tokens + output_tokens), 0),
+                    COALESCE(SUM(cost_usd), 0),
+                    COUNT(*)
+             FROM usage_records
+             WHERE ts >= ?1 AND status = 'ok'
+             GROUP BY d
+             ORDER BY d DESC
+             LIMIT ?2",
+        )?;
+        let rows = stmt.query_map(params![since_ms, max_days as i64], |row| {
+            Ok(DayUsage {
+                date: row.get(0)?,
+                tokens: row.get::<_, i64>(1)? as u64,
+                cost_usd: row.get::<_, f64>(2)?,
+                requests: row.get::<_, i64>(3)? as u64,
+            })
+        })?;
+        let mut out = Vec::new();
+        for r in rows {
+            out.push(r?);
+        }
+        // 查询按新→旧取最近的 max_days 天, 画格子要旧→新
+        out.reverse();
+        Ok(out)
+    }
+
     pub fn sessions(&self, limit: usize) -> anyhow::Result<Vec<SessionInfo>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
@@ -235,5 +266,76 @@ impl Store {
         }
         wtr.flush()?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::Protocol;
+    use chrono::NaiveDate;
+    use std::sync::Arc;
+
+    /// 内存库: 文件库要开 WAL, 内存库不支持, 所以另走一条
+    fn in_memory() -> Store {
+        let store = Store {
+            conn: Arc::new(Mutex::new(Connection::open_in_memory().unwrap())),
+        };
+        store.migrate().unwrap();
+        store
+    }
+
+    fn at(y: i32, m: u32, d: u32, h: u32) -> DateTime<Utc> {
+        NaiveDate::from_ymd_opt(y, m, d)
+            .unwrap()
+            .and_hms_opt(h, 0, 0)
+            .unwrap()
+            .and_utc()
+    }
+
+    fn record(ts: DateTime<Utc>, input: u64, output: u64, cost: f64, status: Status) -> UsageRecord {
+        let mut r = UsageRecord::new(
+            "p1".into(),
+            "Prov".into(),
+            Protocol::Anthropic,
+            "claude-sonnet-4-5".into(),
+        );
+        r.ts = ts;
+        r.input_tokens = input;
+        r.output_tokens = output;
+        r.cost_usd = Some(cost);
+        r.status = status;
+        r
+    }
+
+    #[test]
+    fn daily_usage_groups_by_utc_day() {
+        let store = in_memory();
+        store.insert_usage(&record(at(2026, 10, 11, 23), 100, 50, 0.5, Status::Ok)).unwrap();
+        store.insert_usage(&record(at(2026, 10, 12, 1), 1000, 500, 1.25, Status::Ok)).unwrap();
+        store.insert_usage(&record(at(2026, 10, 12, 22), 200, 100, 0.25, Status::Ok)).unwrap();
+
+        let days = store.daily_usage(0, 90).unwrap();
+        assert_eq!(days.len(), 2, "10-11 23:00 与 10-12 01:00 属于不同 UTC 日");
+        assert_eq!(days[0].date, "2026-10-11");
+        assert_eq!(days[0].tokens, 150);
+        assert_eq!(days[1].date, "2026-10-12");
+        assert_eq!(days[1].tokens, 1800);
+        assert_eq!(days[1].requests, 2);
+        assert!((days[1].cost_usd - 1.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn daily_usage_skips_errors_and_respects_window() {
+        let store = in_memory();
+        store.insert_usage(&record(at(2026, 10, 12, 9), 100, 100, 0.1, Status::Error)).unwrap();
+        store.insert_usage(&record(at(2026, 10, 12, 10), 100, 100, 0.1, Status::Aborted)).unwrap();
+        assert!(store.daily_usage(0, 90).unwrap().is_empty(), "非 ok 记录不进周期表");
+
+        store.insert_usage(&record(at(2026, 10, 13, 10), 7, 7, 0.0, Status::Ok)).unwrap();
+        let since = at(2026, 10, 13, 0).timestamp_millis();
+        let days = store.daily_usage(since, 90).unwrap();
+        assert_eq!(days.len(), 1);
+        assert_eq!(days[0].date, "2026-10-13");
     }
 }

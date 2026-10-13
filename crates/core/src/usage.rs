@@ -93,6 +93,17 @@ pub struct UsageSummary {
     pub avg_tps: Option<f64>,
 }
 
+/// 周期表的一格: 按 UTC 日聚合, 与 UsageSummary 的"今日"同一口径
+#[derive(Debug, Clone)]
+pub struct DayUsage {
+    /// YYYY-MM-DD
+    pub date: String,
+    /// input + output, 不含缓存
+    pub tokens: u64,
+    pub cost_usd: f64,
+    pub requests: u64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionInfo {
     pub session_id: String,

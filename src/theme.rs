@@ -126,6 +126,27 @@ pub fn mono_accent(text: impl Into<String>) -> egui::RichText {
         .color(ACCENT)
 }
 
+// ----- 数字格式 -----
+/// 1.2K / 3.4M 这种紧凑写法: 指标行、周期表 tooltip、小窗共用一套
+pub fn format_short(n: u64) -> String {
+    if n >= 1_000_000 {
+        format!("{:.1}M", n as f64 / 1_000_000.0)
+    } else if n >= 1_000 {
+        format!("{:.1}K", n as f64 / 1_000.0)
+    } else {
+        n.to_string()
+    }
+}
+
+/// 费用: 小额保留 4 位, 正常额度 2 位, 不然 $0.0031 会显示成 $0.00
+pub fn format_cost(v: f64) -> String {
+    if v > 0.0 && v.abs() < 0.01 {
+        format!("${:.4}", v)
+    } else {
+        format!("${:.2}", v)
+    }
+}
+
 // ----- layout -----
 pub fn hairline(ui: &mut egui::Ui) {
     ui.add_space(8.0);

@@ -4,6 +4,7 @@
 mod app;
 mod autostart;
 mod charts;
+mod gauge;
 mod logger;
 mod mini;
 mod mini_theme;
