@@ -46,10 +46,11 @@ jobs:
           name: clowder-windows
           path: clowder-windows.zip
 
-      # 打 v* tag 时再产出 NSIS 安装包
+      # 打 v* tag 时再产出 NSIS 安装包。windows-latest 不预装 NSIS, 用 choco 装
       - name: installer (NSIS)
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
+          choco install nsis -y --no-progress | Out-Null
           $ver = "${{ github.ref_name }}".TrimStart('v')
           makensis /DVERSION=$ver installer/clowder.nsi
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
