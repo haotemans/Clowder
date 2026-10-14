@@ -13,12 +13,30 @@ Rust 实现的 **本地优先** LLM API 供应商切换 + 实时 token/TPS 统�
 
 ## 快速开始
 
-### 构建
+### 安装 (给最终用户)
+
+到 [Releases](https://github.com/haotemans/Clowder/releases) 下载 `clowder-<版本>-setup.exe`, 双击即装:
+
+- 默认走 **per-user** (`%LOCALAPPDATA%\Programs\Clowder`), 不需要管理员权限;
+  首屏勾选 "Install for all users" 才会装到 `C:\Program Files\Clowder` (要 UAC)。
+- 装完有开始菜单项 + 桌面快捷方式 + 卸载入口 (设置 → 应用 → 已安装的应用)。
+- 便捷 zip 版 (`clowder-windows.zip`) 仅需解压即用, 但无快捷方式、无卸载器。
+
+### 构建 (开发者)
 
 ```powershell
 cargo build --release
 .\target\release\clowder.exe
 ```
+
+打安装包 (需本机装有 NSIS 3, `choco install nsis` 或到官网下载):
+
+```powershell
+makensis /DVERSION=0.1.0 installer/clowder.nsi
+# 产出 clowder-0.1.0-setup.exe
+```
+
+打 `v*` tag 推上去后, CI 会自动跑 `installer (NSIS)` 步骤并把 setup.exe 挂到 Release。
 
 ### 字体子集
 

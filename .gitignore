@@ -6,5 +6,9 @@
 
 scripts/memlogs/
 
+# CI 构件下载目录 + NSIS 输出
+dist-ci/
+clowder-*-setup.exe
+
 # assets/fonts/ 是 OFL 授权的 Noto 子集, 要入库 (CI 产物直接带上); 临时字符表不入库
 assets/fonts/_*
