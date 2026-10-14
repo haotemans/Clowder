@@ -52,3 +52,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create "${{ github.ref_name }}" clowder-windows.zip --title "Clowder `${{ github.ref_name }}" --generate-notes
+
+  # 调试版: 不带 --release, 只编不测, 产物单独上传, 不进 Release
+  build-debug:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: debug
+
+      - name: build (debug)
+        run: cargo build --locked
+
+      - name: package (debug)
+        run: |
+          New-Item -ItemType Directory -Force -Path dist-debug | Out-Null
+          Copy-Item target/debug/clowder.exe dist-debug/
+          Copy-Item -Recurse assets dist-debug/assets
+          Compress-Archive -Path dist-debug/* -DestinationPath clowder-windows-debug.zip
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: clowder-windows-debug
+          path: clowder-windows-debug.zip
