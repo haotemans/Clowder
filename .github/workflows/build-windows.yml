@@ -75,7 +75,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "${{ github.ref_name }}" clowder-windows.zip clowder-*-setup.exe --title "Clowder `${{ github.ref_name }}" --generate-notes
+        run: gh release create "${{ github.ref_name }}" clowder-windows.zip clowder-*-setup.exe --title "Clowder ${{ github.ref_name }}" --generate-notes
 
   # 调试版: 不带 --release, 只编不测, 产物单独上传, 不进 Release
   build-debug:
