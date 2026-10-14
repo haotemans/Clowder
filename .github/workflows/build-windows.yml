@@ -6,6 +6,11 @@ on:
     branches: [main]
     tags: ["v*"]
 
+# release job 里 gh release create 需要 contents: write
+# (repo 默认 GITHUB_TOKEN 是只读)
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
