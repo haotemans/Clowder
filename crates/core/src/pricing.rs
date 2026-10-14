@@ -36,19 +36,25 @@ pub struct PriceTable {
 
 impl PriceTable {
     pub fn lookup(&self, model: &str) -> Option<&ModelPrice> {
-        // exact first
-        if let Some(p) = self.models.get(model) {
+        let trimmed = model.trim().trim_end_matches("[1m]");
+        if let Some(p) = self.models.get(trimmed) {
             return Some(p);
         }
-        // common suffix fallback: openrouter/anthropic/claude-3-5-sonnet -> claude-3-5-sonnet
-        let norm = model.replace("openrouter/", "").replace("anthropic/", "");
-        if let Some(p) = self.models.get(&norm) {
+        // 剥离常见网关前缀: openrouter/anthropic/claude-sonnet-4-5 -> claude-sonnet-4-5
+        let norm = trimmed
+            .trim_start_matches("openrouter/")
+            .trim_start_matches("anthropic/")
+            .trim_start_matches("openai/")
+            .trim_start_matches("deepseek/")
+            .trim_start_matches("moonshotai/")
+            .trim_start_matches("z-ai/");
+        if let Some(p) = self.models.get(norm) {
             return Some(p);
         }
-        // litellm keys often contain provider prefix like "claude-3-5-sonnet-20241022"
+        // 前缀/子串模糊匹配 (如 claude-sonnet-4-5-20250929 -> claude-sonnet-4-5)
         self.models
             .iter()
-            .find(|(k, _)| k.contains(&norm) || norm.contains(k.as_str()))
+            .find(|(k, _)| k.contains(norm) || norm.contains(k.as_str()))
             .map(|(_, v)| v)
     }
 
@@ -76,7 +82,6 @@ impl PriceTable {
     }
 }
 
-/// Compile-time fallback snapshot (kept tiny; only most common models)
 pub const SNAPSHOT_JSON: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../assets/pricing_snapshot.json"
@@ -110,16 +115,17 @@ pub fn save_cache(table: &PriceTable) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Resolve effective price table: local override > cache > snapshot
 pub fn resolve_table(overrides: &[(String, ModelPrice)]) -> PriceTable {
-    let mut table = load_cache().ok().flatten().unwrap_or_else(snapshot_table);
+    let mut table = snapshot_table();
+    if let Some(cached) = load_cache().ok().flatten() {
+        table.merge(cached);
+    }
     for (model, price) in overrides {
         table.models.insert(model.clone(), price.clone());
     }
     table
 }
 
-/// LiteLLM 条目只取 4 个价格字段; 走 serde_json::Value 会把整份文件 (~2MB) 放大成几十 MB 常驻峰值
 #[derive(Debug, Deserialize)]
 struct LitellmEntry {
     #[serde(rename = "input_cost_per_token", default)]
@@ -153,7 +159,6 @@ struct OpenRouterPricing {
     completion: Option<String>,
 }
 
-/// 直接按目标类型解析; 上游结构变化时退回 Value 路径, 保证价目不因为一次格式漂移就失效
 pub fn parse_litellm_str(text: &str) -> PriceTable {
     match serde_json::from_str::<std::collections::HashMap<String, LitellmEntry>>(text) {
         Ok(entries) => {
@@ -209,14 +214,15 @@ pub fn parse_openrouter_str(text: &str) -> PriceTable {
                         .unwrap_or(0.0)
                         * 1_000_000.0
                 };
+                let inp = per_m(&m.pricing.prompt);
                 table.models.insert(
                     m.id.clone(),
                     ModelPrice {
                         model: m.id,
-                        input_per_m: per_m(&m.pricing.prompt),
+                        input_per_m: inp,
                         output_per_m: per_m(&m.pricing.completion),
-                        cache_read_per_m: 0.0,
-                        cache_write_per_m: 0.0,
+                        cache_read_per_m: inp * 0.25,
+                        cache_write_per_m: inp,
                         source: PriceSource::OpenRouter,
                     },
                 );
@@ -233,7 +239,6 @@ pub fn parse_openrouter_str(text: &str) -> PriceTable {
     }
 }
 
-/// Parse LiteLLM model_prices_and_context_window.json format
 pub fn parse_litellm_json(json: &serde_json::Value) -> PriceTable {
     let mut table = PriceTable {
         fetched_at: Some(chrono::Utc::now()),
@@ -280,7 +285,6 @@ pub fn parse_litellm_json(json: &serde_json::Value) -> PriceTable {
     table
 }
 
-/// Parse OpenRouter /api/v1/models format
 pub fn parse_openrouter_json(json: &serde_json::Value) -> PriceTable {
     let mut table = PriceTable {
         fetched_at: Some(chrono::Utc::now()),
@@ -306,15 +310,14 @@ pub fn parse_openrouter_json(json: &serde_json::Value) -> PriceTable {
             .and_then(|v| v.as_str())
             .and_then(|s| s.parse::<f64>().ok())
             .unwrap_or(0.0);
-        // openrouter prices are per-token
         table.models.insert(
             id.to_string(),
             ModelPrice {
                 model: id.to_string(),
                 input_per_m: prompt * 1_000_000.0,
                 output_per_m: completion * 1_000_000.0,
-                cache_read_per_m: 0.0,
-                cache_write_per_m: 0.0,
+                cache_read_per_m: prompt * 250_000.0,
+                cache_write_per_m: prompt * 1_000_000.0,
                 source: PriceSource::OpenRouter,
             },
         );

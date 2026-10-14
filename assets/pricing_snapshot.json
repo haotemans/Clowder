@@ -1,5 +1,45 @@
 {
   "models": {
+    "claude-opus-4-6": {
+      "model": "claude-opus-4-6",
+      "input_per_m": 15.0,
+      "output_per_m": 75.0,
+      "cache_read_per_m": 1.5,
+      "cache_write_per_m": 18.75,
+      "source": "snapshot"
+    },
+    "claude-sonnet-4-6": {
+      "model": "claude-sonnet-4-6",
+      "input_per_m": 3.0,
+      "output_per_m": 15.0,
+      "cache_read_per_m": 0.3,
+      "cache_write_per_m": 3.75,
+      "source": "snapshot"
+    },
+    "claude-sonnet-4-5": {
+      "model": "claude-sonnet-4-5",
+      "input_per_m": 3.0,
+      "output_per_m": 15.0,
+      "cache_read_per_m": 0.3,
+      "cache_write_per_m": 3.75,
+      "source": "snapshot"
+    },
+    "claude-haiku-4-5": {
+      "model": "claude-haiku-4-5",
+      "input_per_m": 0.8,
+      "output_per_m": 4.0,
+      "cache_read_per_m": 0.08,
+      "cache_write_per_m": 1.0,
+      "source": "snapshot"
+    },
+    "claude-3-7-sonnet-20250219": {
+      "model": "claude-3-7-sonnet-20250219",
+      "input_per_m": 3.0,
+      "output_per_m": 15.0,
+      "cache_read_per_m": 0.3,
+      "cache_write_per_m": 3.75,
+      "source": "snapshot"
+    },
     "claude-3-5-sonnet-20241022": {
       "model": "claude-3-5-sonnet-20241022",
       "input_per_m": 3.0,
@@ -16,12 +56,36 @@
       "cache_write_per_m": 1.0,
       "source": "snapshot"
     },
-    "claude-3-opus-20240229": {
-      "model": "claude-3-opus-20240229",
-      "input_per_m": 15.0,
-      "output_per_m": 75.0,
-      "cache_read_per_m": 1.5,
-      "cache_write_per_m": 18.75,
+    "gpt-5.5": {
+      "model": "gpt-5.5",
+      "input_per_m": 2.5,
+      "output_per_m": 10.0,
+      "cache_read_per_m": 0.625,
+      "cache_write_per_m": 2.5,
+      "source": "snapshot"
+    },
+    "gpt-5.4": {
+      "model": "gpt-5.4",
+      "input_per_m": 2.0,
+      "output_per_m": 8.0,
+      "cache_read_per_m": 0.5,
+      "cache_write_per_m": 2.0,
+      "source": "snapshot"
+    },
+    "gpt-4.1": {
+      "model": "gpt-4.1",
+      "input_per_m": 2.0,
+      "output_per_m": 8.0,
+      "cache_read_per_m": 0.5,
+      "cache_write_per_m": 2.0,
+      "source": "snapshot"
+    },
+    "gpt-4.1-mini": {
+      "model": "gpt-4.1-mini",
+      "input_per_m": 0.4,
+      "output_per_m": 1.6,
+      "cache_read_per_m": 0.1,
+      "cache_write_per_m": 0.4,
       "source": "snapshot"
     },
     "gpt-4o": {
@@ -40,12 +104,44 @@
       "cache_write_per_m": 0.15,
       "source": "snapshot"
     },
-    "o1": {
-      "model": "o1",
-      "input_per_m": 15.0,
-      "output_per_m": 60.0,
-      "cache_read_per_m": 7.5,
-      "cache_write_per_m": 15.0,
+    "o3": {
+      "model": "o3",
+      "input_per_m": 2.0,
+      "output_per_m": 8.0,
+      "cache_read_per_m": 0.5,
+      "cache_write_per_m": 2.0,
+      "source": "snapshot"
+    },
+    "o4-mini": {
+      "model": "o4-mini",
+      "input_per_m": 1.1,
+      "output_per_m": 4.4,
+      "cache_read_per_m": 0.275,
+      "cache_write_per_m": 1.1,
+      "source": "snapshot"
+    },
+    "codex-mini-latest": {
+      "model": "codex-mini-latest",
+      "input_per_m": 1.5,
+      "output_per_m": 6.0,
+      "cache_read_per_m": 0.375,
+      "cache_write_per_m": 1.5,
+      "source": "snapshot"
+    },
+    "deepseek-v4-pro": {
+      "model": "deepseek-v4-pro",
+      "input_per_m": 0.55,
+      "output_per_m": 2.19,
+      "cache_read_per_m": 0.14,
+      "cache_write_per_m": 0.55,
+      "source": "snapshot"
+    },
+    "deepseek-v4-flash": {
+      "model": "deepseek-v4-flash",
+      "input_per_m": 0.14,
+      "output_per_m": 0.56,
+      "cache_read_per_m": 0.035,
+      "cache_write_per_m": 0.14,
       "source": "snapshot"
     },
     "deepseek-chat": {
@@ -54,6 +150,54 @@
       "output_per_m": 1.1,
       "cache_read_per_m": 0.07,
       "cache_write_per_m": 0.27,
+      "source": "snapshot"
+    },
+    "deepseek-reasoner": {
+      "model": "deepseek-reasoner",
+      "input_per_m": 0.55,
+      "output_per_m": 2.19,
+      "cache_read_per_m": 0.14,
+      "cache_write_per_m": 0.55,
+      "source": "snapshot"
+    },
+    "kimi-k3": {
+      "model": "kimi-k3",
+      "input_per_m": 0.6,
+      "output_per_m": 2.4,
+      "cache_read_per_m": 0.15,
+      "cache_write_per_m": 0.6,
+      "source": "snapshot"
+    },
+    "kimi-k2.5": {
+      "model": "kimi-k2.5",
+      "input_per_m": 0.5,
+      "output_per_m": 2.0,
+      "cache_read_per_m": 0.12,
+      "cache_write_per_m": 0.5,
+      "source": "snapshot"
+    },
+    "glm-5": {
+      "model": "glm-5",
+      "input_per_m": 0.5,
+      "output_per_m": 2.0,
+      "cache_read_per_m": 0.12,
+      "cache_write_per_m": 0.5,
+      "source": "snapshot"
+    },
+    "qwen3-coder": {
+      "model": "qwen3-coder",
+      "input_per_m": 0.4,
+      "output_per_m": 1.2,
+      "cache_read_per_m": 0.1,
+      "cache_write_per_m": 0.4,
+      "source": "snapshot"
+    },
+    "minimax-m3": {
+      "model": "minimax-m3",
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
+      "cache_read_per_m": 0.08,
+      "cache_write_per_m": 0.3,
       "source": "snapshot"
     }
   }

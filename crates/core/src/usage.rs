@@ -14,11 +14,16 @@ pub struct UsageRecord {
     pub output_tokens: u64,
     pub cache_read_tokens: u64,
     pub cache_write_tokens: u64,
+    #[serde(default)]
+    pub reasoning_tokens: u64,
     pub ttft_ms: Option<u64>,
     pub duration_ms: u64,
     pub tps: Option<f64>,
     pub cost_usd: Option<f64>,
     pub session_id: Option<String>,
+    /// 发起请求的 Agent 标识 (如 claude-code, codex, pi, dsh, opencodev2 等)
+    #[serde(default)]
+    pub agent_id: Option<String>,
     /// true when token counts are estimated (no upstream usage chunk)
     pub estimated: bool,
     pub status: Status,
@@ -33,8 +38,6 @@ pub enum Status {
 }
 
 impl Status {
-    /// 库里存纯文本; 之前存的是 serde_json 结果 (带引号), 导致 `WHERE status = 'ok'` 一条都匹配不到,
-    /// 今日统计恒为 0
     pub fn as_str(&self) -> &'static str {
         match self {
             Status::Ok => "ok",
@@ -43,7 +46,6 @@ impl Status {
         }
     }
 
-    /// 兼容旧的 `"ok"` 带引号写法
     pub fn from_db(s: &str) -> Self {
         match s.trim_matches('"') {
             "error" => Status::Error,
@@ -71,11 +73,13 @@ impl UsageRecord {
             output_tokens: 0,
             cache_read_tokens: 0,
             cache_write_tokens: 0,
+            reasoning_tokens: 0,
             ttft_ms: None,
             duration_ms: 0,
             tps: None,
             cost_usd: None,
             session_id: None,
+            agent_id: None,
             estimated: false,
             status: Status::Ok,
         }
@@ -88,6 +92,7 @@ pub struct UsageSummary {
     pub output_tokens: u64,
     pub cache_read_tokens: u64,
     pub cache_write_tokens: u64,
+    pub reasoning_tokens: u64,
     pub cost_usd: f64,
     pub request_count: u64,
     pub avg_tps: Option<f64>,
@@ -107,6 +112,8 @@ pub struct DayUsage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionInfo {
     pub session_id: String,
+    pub agent_id: String,
+    pub source_kind: String, // "proxy" or "local"
     pub started_at: DateTime<Utc>,
     pub last_activity: DateTime<Utc>,
     pub request_count: u64,

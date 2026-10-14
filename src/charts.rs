@@ -6,7 +6,7 @@ use chrono::{Datelike, NaiveDate};
 use clowder_core::DayUsage;
 use egui::{Color32, FontId, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 
-/// 强度分档: 冷白 → 天青, 与主界面同一系
+/// 强度分档: 冷白 -> 天青, 与主界面同一系
 const RAMP: [Color32; 5] = [
     Color32::from_rgb(0xD7, 0xE9, 0xF5),
     Color32::from_rgb(0xA8, 0xD3, 0xEA),

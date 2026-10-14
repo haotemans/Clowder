@@ -13,17 +13,22 @@ mod theme;
 
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
-use clowder_core::{db_path, migrate_legacy_data, Config, Store};
+use clowder_core::{
+    db_path, migrate_legacy_data, read_claude_code_oauth_token, read_codex_oauth_token, AgentId,
+    AgentRouteMode, AuthKind, Config, Protocol, Provider, Store, UpstreamStrategy,
+};
 use clowder_proxy::AppState;
 
 fn main() -> anyhow::Result<()> {
     let args: Vec<String> = std::env::args().collect();
+
+    if args.get(1).map(|s| s.as_str()) == Some("cli") {
+        return run_cli(&args[2..]);
+    }
+
     let headless = args.iter().any(|a| a == "-s" || a == "--server");
-    // 默认开小窗; -f / --full 直接开主界面
     let start_full = args.iter().any(|a| a == "-f" || a == "--full");
 
-    // 改名 (yuantuanswitch → Clowder) 后的一次性数据迁移, 必须在 logger::init 之前:
-    // 日志文件一落到新 data 目录, 迁移就会把非空目录判定成"已经迁过"而跳过
     let migration = migrate_legacy_data();
     logger::init(headless);
     match migration {
@@ -39,6 +44,194 @@ fn main() -> anyhow::Result<()> {
         }
     }
     result
+}
+
+fn run_cli(args: &[String]) -> anyhow::Result<()> {
+    let sub = args.first().map(|s| s.as_str()).unwrap_or("status");
+    let mut cfg = Config::load()?;
+
+    match sub {
+        "status" => {
+            println!("listen: http://{}", cfg.proxy.listen);
+            println!("privacy: local-only (0 upload, DPAPI encrypted keys, anonymized sessions)");
+            println!("passthrough: same-protocol byte-identical / cross-protocol auto-bridge");
+            println!(
+                "local_oauth_detected: claude_code={} codex={}",
+                read_claude_code_oauth_token().is_some(),
+                read_codex_oauth_token().is_some()
+            );
+            println!(
+                "global_provider_id: {}",
+                cfg.active_provider_id.as_deref().unwrap_or("(none)")
+            );
+            println!("providers ({}):", cfg.providers.len());
+            for p in &cfg.providers {
+                println!(
+                    "  - id={} name=\"{}\" protocol={} auth={} base_url={} upstream={}",
+                    p.id,
+                    p.name,
+                    p.protocol.as_str(),
+                    p.auth_kind,
+                    p.base_url,
+                    p.upstream_strategy
+                );
+            }
+            println!("agents ({}):", cfg.agents.len());
+            for a in &cfg.agents {
+                let eff = cfg
+                    .resolve_provider_for_agent(Some(a.agent), Some(a.agent.preferred_protocol()))
+                    .map(|p| p.id.as_str())
+                    .unwrap_or("(none)");
+                println!(
+                    "  - {} ({}) mode={} effective_provider={} model={} visible={}",
+                    a.agent.as_str(),
+                    a.agent.label(),
+                    a.route_mode,
+                    eff,
+                    a.default_model.as_deref().unwrap_or("(default)"),
+                    a.enabled_in_switcher
+                );
+            }
+        }
+        "add-oauth" => {
+            // clowder cli add-oauth <claude|codex> [--set-global]
+            let kind = args
+                .get(1)
+                .map(|s| s.as_str())
+                .ok_or_else(|| anyhow::anyhow!("Usage: clowder cli add-oauth <claude|codex> [--set-global]"))?;
+            let preset = match kind {
+                "claude" | "claude-code" | "claude-oauth" => Provider::claude_oauth(),
+                "codex" | "codex-oauth" | "chatgpt" => Provider::codex_oauth(),
+                _ => anyhow::bail!("Unknown OAuth kind '{}'. Use 'claude' or 'codex'", kind),
+            };
+            let pid = preset.id.clone();
+            if let Some(existing) = cfg.providers.iter_mut().find(|p| p.id == pid) {
+                *existing = preset;
+            } else {
+                cfg.providers.push(preset);
+            }
+            if args.iter().any(|a| a == "--set-global") || cfg.active_provider_id.is_none() {
+                cfg.active_provider_id = Some(pid.clone());
+            }
+            cfg.save()?;
+            println!("ok: OAuth membership provider '{}' registered", pid);
+        }
+        "add-provider" => {
+            if args.len() < 6 {
+                anyhow::bail!(
+                    "Usage: clowder cli add-provider <id> <name> <anthropic|openai> <base_url> <api_key> [direct|system_proxy|custom] [custom_proxy_url]"
+                );
+            }
+            let id = args[1].clone();
+            let name = args[2].clone();
+            let protocol = Protocol::from_db(&args[3]);
+            let base_url = args[4].clone();
+            let api_key_encrypted = if args[5].is_empty() {
+                String::new()
+            } else {
+                clowder_proxy::dpapi::encrypt(&args[5])?
+            };
+            let upstream_strategy = match args.get(6).map(|s| s.as_str()) {
+                Some("direct") => UpstreamStrategy::Direct,
+                Some("custom") => UpstreamStrategy::Custom,
+                _ => UpstreamStrategy::SystemProxy,
+            };
+            let custom_proxy_url = args.get(7).cloned();
+
+            if let Some(existing) = cfg.providers.iter_mut().find(|p| p.id == id) {
+                existing.name = name;
+                existing.protocol = protocol;
+                existing.base_url = base_url;
+                if !api_key_encrypted.is_empty() {
+                    existing.api_key_encrypted = api_key_encrypted;
+                }
+                existing.upstream_strategy = upstream_strategy;
+                existing.custom_proxy_url = custom_proxy_url;
+            } else {
+                cfg.providers.push(Provider {
+                    id: id.clone(),
+                    name,
+                    protocol,
+                    base_url,
+                    api_key_encrypted,
+                    auth_kind: AuthKind::ApiKey,
+                    emulate_claude_code: false,
+                    upstream_strategy,
+                    custom_proxy_url,
+                    headers: Vec::new(),
+                });
+            }
+            if cfg.active_provider_id.is_none() {
+                cfg.active_provider_id = Some(id.clone());
+            }
+            cfg.save()?;
+            println!("ok: provider '{}' saved locally (DPAPI encrypted)", id);
+        }
+        "set-global" => {
+            let pid = args
+                .get(1)
+                .ok_or_else(|| anyhow::anyhow!("Usage: clowder cli set-global <provider_id> [--sync]"))?;
+            if cfg.provider_by_id(pid).is_none() {
+                anyhow::bail!("provider '{}' not found", pid);
+            }
+            cfg.active_provider_id = Some(pid.clone());
+            cfg.save()?;
+            println!("ok: global provider set to '{}'", pid);
+            if args.iter().any(|a| a == "--sync") {
+                for msg in cfg.sync_all_enabled_agents() {
+                    println!("  {}", msg);
+                }
+            }
+        }
+        "set-agent" => {
+            if args.len() < 3 {
+                anyhow::bail!(
+                    "Usage: clowder cli set-agent <agent_slug> <global|provider_id> [default_model]"
+                );
+            }
+            let agent = AgentId::from_slug(&args[1])
+                .ok_or_else(|| anyhow::anyhow!("unknown agent '{}'", args[1]))?;
+            let target = args[2].as_str();
+            let model = args.get(3).cloned();
+            {
+                let prof = cfg.agent_profile_mut(agent);
+                if target.eq_ignore_ascii_case("global") || target == "follow_global" {
+                    prof.route_mode = AgentRouteMode::FollowGlobal;
+                    prof.provider_id = None;
+                } else {
+                    prof.route_mode = AgentRouteMode::Dedicated;
+                    prof.provider_id = Some(target.to_string());
+                }
+                if let Some(m) = model {
+                    prof.default_model = if m.is_empty() { None } else { Some(m) };
+                }
+            }
+            cfg.save()?;
+            let msg = cfg.write_agent_local_config(agent)?;
+            println!("ok: {}", msg);
+        }
+        "restore-agent" => {
+            let slug = args
+                .get(1)
+                .ok_or_else(|| anyhow::anyhow!("Usage: clowder cli restore-agent <agent_slug>"))?;
+            let agent = AgentId::from_slug(slug)
+                .ok_or_else(|| anyhow::anyhow!("unknown agent '{}'", slug))?;
+            let msg = cfg.restore_agent_local_config(agent)?;
+            println!("ok: {}", msg);
+        }
+        "sync-all" => {
+            for msg in cfg.sync_all_enabled_agents() {
+                println!("{}", msg);
+            }
+        }
+        _ => {
+            anyhow::bail!(
+                "Unknown cli subcommand '{}'. Available: status, add-oauth, add-provider, set-global, set-agent, restore-agent, sync-all",
+                sub
+            );
+        }
+    }
+    Ok(())
 }
 
 fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
@@ -65,7 +258,6 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
         price_table: Arc::new(RwLock::new(clowder_core::resolve_table(&[]))),
     };
 
-    // start proxy in background
     let proxy_state = state.clone();
     rt.spawn(async move {
         let listen = {
@@ -77,7 +269,6 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
         }
     });
 
-    // pricing refresh background task
     let pricing_state = state.clone();
     rt.spawn(async move {
         loop {
@@ -92,10 +283,11 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
             let mut table = clowder_core::resolve_table(&[]);
             let mut updated = false;
 
-            // 缓存还在有效期内就不拉, 省掉两次大 JSON 的内存峰值和启动时的流量
             let fresh = table
                 .fetched_at
-                .map(|t| chrono::Utc::now().signed_duration_since(t).num_seconds() < hours as i64 * 3600)
+                .map(|t| {
+                    chrono::Utc::now().signed_duration_since(t).num_seconds() < hours as i64 * 3600
+                })
                 .unwrap_or(false);
             if !fresh {
                 if litellm_on {
@@ -131,7 +323,6 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
             if updated {
                 table.fetched_at = Some(chrono::Utc::now());
                 let _ = clowder_core::save_cache(&table);
-                // write().await: try_write 在 GUI 持有读锁时会静默失败, 价目几小时都不更新
                 *pricing_state.price_table.write().await = table;
             }
 
@@ -141,12 +332,11 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
 
     let app = app::ClowderApp::new(state, usage_rx, store, start_full);
 
-    // 默认开小窗; -f 直接开主界面, 窗口参数要和 app 的初始 mode 一致, 否则会先弹一个 300px 的框
     let mut builder = egui::ViewportBuilder::default().with_icon(load_icon());
     builder = if start_full {
         builder
-            .with_inner_size([1280.0, 800.0])
-            .with_min_inner_size([960.0, 600.0])
+            .with_inner_size([1280.0, 820.0])
+            .with_min_inner_size([960.0, 620.0])
             .with_max_inner_size([2400.0, 1600.0])
     } else {
         builder
@@ -170,7 +360,6 @@ fn run(headless: bool, start_full: bool) -> anyhow::Result<()> {
 }
 
 fn load_icon() -> egui::IconData {
-    // simple generated 32x32 icon: blue circle
     let size = 32usize;
     let mut rgba = vec![0u8; size * size * 4];
     let cx = size as f32 / 2.0;
@@ -182,10 +371,10 @@ fn load_icon() -> egui::IconData {
             let d = (dx * dx + dy * dy).sqrt();
             if d < 14.0 {
                 let idx = (y * size + x) * 4;
-                rgba[idx] = 59; // R
-                rgba[idx + 1] = 130; // G
-                rgba[idx + 2] = 246; // B
-                rgba[idx + 3] = 255; // A
+                rgba[idx] = 59;
+                rgba[idx + 1] = 130;
+                rgba[idx + 2] = 246;
+                rgba[idx + 3] = 255;
             }
         }
     }
