@@ -46,13 +46,16 @@ jobs:
           name: clowder-windows
           path: clowder-windows.zip
 
-      # 打 v* tag 时再产出 NSIS 安装包。windows-latest 不预装 NSIS, 用 choco 装
+      # 打 v* tag 时再产出 NSIS 安装包。runner 不预装 NSIS, 用 choco 装;
+      # choco 修改的 PATH 在 GitHub Actions 的当前 pwsh 不生效, 给完整路径稳妥
       - name: installer (NSIS)
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           choco install nsis -y --no-progress | Out-Null
+          $makensis = "C:\Program Files (x86)\NSIS\makensis.exe"
+          if (-not (Test-Path $makensis)) { throw "makensis not found after choco install" }
           $ver = "${{ github.ref_name }}".TrimStart('v')
-          makensis /DVERSION=$ver installer/clowder.nsi
+          & $makensis /DVERSION=$ver installer/clowder.nsi
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: upload installer artifact
